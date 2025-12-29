@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { useTasks } from '@/hooks/useTasks';
 import { useMobile } from '@/hooks/use-mobile';
 import { Task } from '@/types/task';
-import TaskSidebar from './TaskSidebar';
 import TaskList from './TaskList';
 import TaskModal from './TaskModal';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
+import Sidebar from './Sidebar';
 
 const TaskView = () => {
   const isMobile = useMobile();
@@ -17,11 +17,9 @@ const TaskView = () => {
 
   const handleCreateTask = () => {
     if (isMobile) {
-      // En móvil usar modal completo
       setEditingTask(undefined);
       setIsTaskModalOpen(true);
     } else {
-      // En desktop usar QuickAdd
       setShowQuickAdd(true);
     }
   };
@@ -44,7 +42,7 @@ const TaskView = () => {
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-gray-50">
-        <TaskSidebar onCreateTask={handleCreateTask} />
+        <Sidebar onCreateTask={handleCreateTask} inTasks={true} />
         
         <SidebarInset className="flex-1">
           <TaskList 
