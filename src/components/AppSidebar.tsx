@@ -77,7 +77,7 @@ const AppSidebar = ({ onCreateEvent }: AppSidebarProps) => {
         <div className="flex items-center space-x-3">
           <Calendar className="h-6 w-6 text-primary" />
           {state === 'expanded' && (
-            <span className="text-xl font-semibold text-gray-900">Samify</span>
+            <span className="text-xl font-bold text-gray-900">Samify</span>
           )}
         </div>
       </SidebarHeader>
