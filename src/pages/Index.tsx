@@ -7,7 +7,7 @@ import {
   SidebarTrigger,
   SidebarInset,
 } from "@/components/ui/sidebar";
-import AppSidebar from "@/components/AppSidebar";
+import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 import CalendarGrid from "@/components/CalendarGrid";
 import EventModal from "@/components/EventModal";
@@ -67,25 +67,21 @@ const Index = () => {
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-gray-50">
-        {currentView === "calendar" ? (
-          <AppSidebar onCreateEvent={handleCreateEvent} />
-        ) : (
-          <div></div>
-        )}
+        <Sidebar 
+          inTasks={currentView === "tasks"}
+          onCreateEvent={handleCreateEvent}
+          onCreateTask={() => console.log('Create task')}
+        />
 
         <SidebarInset className="flex-1">
           {/* Header with sidebar trigger and navigation */}
           <div className="sticky top-0 z-40 bg-white border-b border-gray-100 shadow-soft">
             <div className="flex items-center justify-between px-4 py-3">
               <div className="flex items-center space-x-4">
-                {currentView === "calendar" && (
-                  <>
-                    <SidebarTrigger className="md:hidden" />
-                    <div className="hidden md:block">
-                      <SidebarTrigger />
-                    </div>
-                  </>
-                )}
+                <SidebarTrigger className="md:hidden" />
+                <div className="hidden md:block">
+                  <SidebarTrigger />
+                </div>
 
                 {/* Navigation Toggle */}
                 <NavigationToggle

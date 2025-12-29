@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useTasks } from '@/hooks/useTasks';
 import { useMobile } from '@/hooks/use-mobile';
 import { Task } from '@/types/task';
-import TaskSidebar from '@/components/TaskSidebar';
+import Sidebar from '@/components/Sidebar';
 import TaskList from '@/components/TaskList';
 import TaskModal from '@/components/TaskModal';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
@@ -44,7 +44,10 @@ const Tasks = () => {
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-gray-50">
-        <TaskSidebar onCreateTask={handleCreateTask} />
+        <Sidebar 
+          inTasks={true}
+          onCreateTask={handleCreateTask}
+        />
         
         <SidebarInset className="flex-1">
           <TaskList 
