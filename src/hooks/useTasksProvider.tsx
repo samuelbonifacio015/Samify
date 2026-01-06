@@ -1,5 +1,6 @@
-import { createContext, useContext, useState, useMemo, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useState, useMemo, useCallback, useEffect, ReactNode } from 'react';
 import { Task, TaskFilter, TaskSort } from '@/types/task';
+import { supabaseClient } from '@/lib/supabaseClient';
 
 interface TasksContextType {
   tasks: Task[];
@@ -15,9 +16,9 @@ interface TasksContextType {
   };
   setFilter: (filter: TaskFilter) => void;
   setSort: (sort: TaskSort) => void;
-  addTask: (taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>) => void;
-  updateTask: (id: string, updates: Partial<Task>) => void;
-  deleteTask: (id: string) => void;
+  addTask: (taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
+  updateTask: (id: string, updates: Partial<Task>) => Promise<void>;
+  deleteTask: (id: string) => Promise<void>;
   toggleTaskCompletion: (id: string) => void;
   toggleTaskStarred: (id: string) => void;
   addSubtask: (taskId: string, subtaskTitle: string) => void;
@@ -27,123 +28,199 @@ interface TasksContextType {
 const TasksContext = createContext<TasksContextType | undefined>(undefined);
 
 export const TasksProvider = ({ children }: { children: ReactNode }) => {
-  const [tasks, setTasks] = useState<Task[]>([
-    {
-      id: '1',
-      title: 'Revisar propuesta de diseño',
-      description: 'Revisar los mockups y dar feedback',
-      completed: false,
-      dueDate: new Date(Date.now() + 86400000),
-      priority: 'high',
-      category: 'work',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      starred: true,
-      subtasks: [
-        { id: '1a', title: 'Revisar wireframes', completed: true },
-        { id: '1b', title: 'Validar colores', completed: false }
-      ]
-    },
-    {
-      id: '2',
-      title: 'Comprar ingredientes para la cena',
-      description: '',
-      completed: false,
-      dueDate: new Date(),
-      priority: 'medium',
-      category: 'personal',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      starred: false
-    },
-    {
-      id: '3',
-      title: 'Llamar al dentista',
-      description: 'Programar cita de rutina',
-      completed: true,
-      priority: 'low',
-      category: 'personal',
-      createdAt: new Date(Date.now() - 86400000),
-      updatedAt: new Date(),
-      starred: false
-    }
-  ]);
-
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [filter, setFilter] = useState<TaskFilter>('all');
   const [sort, setSort] = useState<TaskSort>('dueDate');
 
-  const addTask = useCallback((taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>) => {
-    console.log('[TasksProvider] addTask called with:', JSON.stringify(taskData, null, 2));
-    
-    const newTask: Task = {
-      ...taskData,
-      id: Date.now().toString(),
-      createdAt: new Date(),
-      updatedAt: new Date()
+  useEffect(() => {
+    const loadTasks = async () => {
+      try {
+        const { data, error } = await supabaseClient
+          .from('tasks')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          return;
+        }
+
+        if (data) {
+          const formattedTasks: Task[] = data.map((task) => {
+            const typedTask = task as {
+              id: string;
+              title: string;
+              description: string | null;
+              completed: boolean;
+              due_date: string | null;
+              priority: 'low' | 'medium' | 'high';
+              category: 'personal' | 'work' | 'family' | 'other';
+              created_at: string;
+              updated_at: string;
+              starred: boolean;
+              subtasks?: { id: string; title: string; completed: boolean }[];
+            };
+            return {
+              id: typedTask.id,
+              title: typedTask.title,
+              description: typedTask.description || undefined,
+              completed: typedTask.completed,
+              dueDate: typedTask.due_date ? new Date(typedTask.due_date) : undefined,
+              priority: typedTask.priority,
+              category: typedTask.category,
+              createdAt: new Date(typedTask.created_at),
+              updatedAt: new Date(typedTask.updated_at),
+              starred: typedTask.starred,
+              subtasks: typedTask.subtasks || []
+            };
+          });
+          setTasks(formattedTasks);
+        }
+      } catch (err) {
+      }
     };
-    
-    console.log('[TasksProvider] Created new task:', JSON.stringify(newTask, null, 2));
-    
+
+    loadTasks();
+  }, []);
+
+  const addTask = useCallback(async (taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const taskToInsert = {
+      title: taskData.title,
+      description: taskData.description || null,
+      completed: taskData.completed,
+      due_date: taskData.dueDate?.toISOString() || null,
+      priority: taskData.priority,
+      category: taskData.category,
+      starred: taskData.starred,
+      subtasks: taskData.subtasks || []
+    };
+
+    const { data, error } = await supabaseClient
+      .from('tasks')
+      .insert(taskToInsert)
+      .select()
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    const newTask: Task = {
+      id: data.id,
+      title: data.title,
+      description: data.description,
+      completed: data.completed,
+      dueDate: data.due_date ? new Date(data.due_date) : undefined,
+      priority: data.priority,
+      category: data.category,
+      createdAt: new Date(data.created_at),
+      updatedAt: new Date(data.updated_at),
+      starred: data.starred,
+      subtasks: data.subtasks || []
+    };
+
     setTasks(prev => {
-      const updated = [...prev, newTask];
-      console.log('[TasksProvider] Tasks after add:', updated.length, 'tasks');
+      const updated = [newTask, ...prev];
       return updated;
     });
   }, []);
 
-  const updateTask = useCallback((id: string, updates: Partial<Task>) => {
-    console.log('[TasksProvider] updateTask called:', id, JSON.stringify(updates, null, 2));
-    
-    setTasks(prev => prev.map(task => 
-      task.id === id 
+  const updateTask = useCallback(async (id: string, updates: Partial<Task>) => {
+    const updatesToSend: Record<string, unknown> = {
+      updated_at: new Date().toISOString()
+    };
+
+    if (updates.title !== undefined) updatesToSend.title = updates.title;
+    if (updates.description !== undefined) updatesToSend.description = updates.description;
+    if (updates.completed !== undefined) updatesToSend.completed = updates.completed;
+    if (updates.dueDate !== undefined) updatesToSend.due_date = updates.dueDate.toISOString();
+    if (updates.priority !== undefined) updatesToSend.priority = updates.priority;
+    if (updates.category !== undefined) updatesToSend.category = updates.category;
+    if (updates.starred !== undefined) updatesToSend.starred = updates.starred;
+    if (updates.subtasks !== undefined) updatesToSend.subtasks = updates.subtasks;
+
+    const { error } = await supabaseClient
+      .from('tasks')
+      .update(updatesToSend)
+      .eq('id', id);
+
+    if (error) {
+      throw error;
+    }
+
+    setTasks(prev => prev.map(task =>
+      task.id === id
         ? { ...task, ...updates, updatedAt: new Date() }
         : task
     ));
   }, []);
 
-  const deleteTask = useCallback((id: string) => {
-    console.log('[TasksProvider] deleteTask called:', id);
-    
+  const deleteTask = useCallback(async (id: string) => {
+    const { error } = await supabaseClient
+      .from('tasks')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      throw error;
+    }
+
     setTasks(prev => {
       const filtered = prev.filter(task => task.id !== id);
-      console.log('[TasksProvider] Tasks after delete:', filtered.length, 'tasks');
       return filtered;
     });
   }, []);
 
-  const toggleTaskCompletion = useCallback((id: string) => {
-    console.log('[TasksProvider] toggleTaskCompletion called:', id);
-    
-    setTasks(prev => prev.map(task => 
-      task.id === id 
+  const toggleTaskCompletion = useCallback(async (id: string) => {
+    const task = tasks.find(t => t.id === id);
+    if (!task) return;
+
+    const { error } = await supabaseClient
+      .from('tasks')
+      .update({ completed: !task.completed, updated_at: new Date().toISOString() })
+      .eq('id', id);
+
+    if (error) {
+      return;
+    }
+
+    setTasks(prev => prev.map(task =>
+      task.id === id
         ? { ...task, completed: !task.completed, updatedAt: new Date() }
         : task
     ));
-  }, []);
+  }, [tasks]);
 
-  const toggleTaskStarred = useCallback((id: string) => {
-    console.log('[TasksProvider] toggleTaskStarred called:', id);
-    
-    setTasks(prev => prev.map(task => 
-      task.id === id 
+  const toggleTaskStarred = useCallback(async (id: string) => {
+    const task = tasks.find(t => t.id === id);
+    if (!task) return;
+
+    const { error } = await supabaseClient
+      .from('tasks')
+      .update({ starred: !task.starred, updated_at: new Date().toISOString() })
+      .eq('id', id);
+
+    if (error) {
+      return;
+    }
+
+    setTasks(prev => prev.map(task =>
+      task.id === id
         ? { ...task, starred: !task.starred, updatedAt: new Date() }
         : task
     ));
-  }, []);
+  }, [tasks]);
 
   const addSubtask = useCallback((taskId: string, subtaskTitle: string) => {
-    console.log('[TasksProvider] addSubtask called:', taskId, subtaskTitle);
-    
     const newSubtask = {
       id: Date.now().toString(),
       title: subtaskTitle,
       completed: false
     };
-    
-    setTasks(prev => prev.map(task => 
-      task.id === taskId 
-        ? { 
-            ...task, 
+
+    setTasks(prev => prev.map(task =>
+      task.id === taskId
+        ? {
+            ...task,
             subtasks: [...(task.subtasks || []), newSubtask],
             updatedAt: new Date()
           }
@@ -152,14 +229,12 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const toggleSubtask = useCallback((taskId: string, subtaskId: string) => {
-    console.log('[TasksProvider] toggleSubtask called:', taskId, subtaskId);
-    
-    setTasks(prev => prev.map(task => 
-      task.id === taskId 
-        ? { 
-            ...task, 
-            subtasks: task.subtasks?.map(sub => 
-              sub.id === subtaskId 
+    setTasks(prev => prev.map(task =>
+      task.id === taskId
+        ? {
+            ...task,
+            subtasks: task.subtasks?.map(sub =>
+              sub.id === subtaskId
                 ? { ...sub, completed: !sub.completed }
                 : sub
             ),
@@ -186,6 +261,8 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
         break;
     }
 
+    const priorityOrder = { high: 3, medium: 2, low: 1 };
+
     switch (sort) {
       case 'dueDate':
         filtered.sort((a, b) => {
@@ -196,7 +273,6 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
         });
         break;
       case 'priority':
-        const priorityOrder = { high: 3, medium: 2, low: 1 };
         filtered.sort((a, b) => priorityOrder[b.priority] - priorityOrder[a.priority]);
         break;
       case 'created':
@@ -215,9 +291,9 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     const completed = tasks.filter(t => t.completed).length;
     const pending = total - completed;
     const starred = tasks.filter(t => t.starred).length;
-    const overdue = tasks.filter(t => 
-      t.dueDate && 
-      new Date(t.dueDate) < new Date() && 
+    const overdue = tasks.filter(t =>
+      t.dueDate &&
+      new Date(t.dueDate) < new Date() &&
       !t.completed
     ).length;
 
@@ -249,7 +325,6 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
 export const useTasks = () => {
   const context = useContext(TasksContext);
   if (context === undefined) {
-    console.warn('[useTasks] useTasks used outside of TasksProvider');
     throw new Error('useTasks must be used within a TasksProvider');
   }
   return context;

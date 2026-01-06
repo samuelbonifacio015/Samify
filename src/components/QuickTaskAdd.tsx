@@ -42,34 +42,22 @@ const QuickTaskAdd = ({ isOpen, onClose, onComplete }: QuickTaskAddProps) => {
   }, [isOpen]);
 
   const handleSubmit = () => {
-    console.log('[QuickTaskAdd] handleSubmit called');
-    console.log('[QuickTaskAdd] Title:', title);
-    console.log('[QuickTaskAdd] Description:', description);
-    console.log('[QuickTaskAdd] Selected date:', selectedDate);
-    console.log('[QuickTaskAdd] Custom date:', customDate);
-    
     if (!title.trim()) {
-      console.warn('[QuickTaskAdd] Title is empty, aborting');
       return;
     }
 
     let dueDate: Date | undefined;
-    
+
     if (selectedDate === 'today') {
       dueDate = new Date();
-      console.log('[QuickTaskAdd] Due date set to today');
     } else if (selectedDate === 'tomorrow') {
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
       dueDate = tomorrow;
-      console.log('[QuickTaskAdd] Due date set to tomorrow');
     } else if (selectedDate === 'custom' && customDate) {
       dueDate = new Date(customDate);
-      console.log('[QuickTaskAdd] Due date set to custom:', customDate);
     }
 
-    console.log('[QuickTaskAdd] Calling addTask with:', { title: title.trim(), description: description.trim(), dueDate });
-    
     addTask({
       title: title.trim(),
       description: description.trim(),
@@ -91,7 +79,6 @@ const QuickTaskAdd = ({ isOpen, onClose, onComplete }: QuickTaskAddProps) => {
   };
 
   const handleCancel = () => {
-    console.log('[QuickTaskAdd] handleCancel called');
     setTitle('');
     setDescription('');
     setSelectedDate('today');

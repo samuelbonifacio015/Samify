@@ -1,13 +1,11 @@
 import { useState } from 'react';
-import { 
-  Plus, 
-  Star, 
-  Calendar, 
-  Clock,
+import {
+  Plus,
+  Star,
+  Calendar,
   MoreVertical,
   Check,
   X,
-  Edit3,
   Trash2,
   AlertCircle,
   Save
@@ -20,25 +18,21 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { useTasks } from '@/hooks/useTasksProvider';
-import { useMobile } from '@/hooks/use-mobile';
 import { Task } from '@/types/task';
 import QuickTaskAdd from './QuickTaskAdd';
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
 interface TaskListProps {
   onCreateTask: () => void;
-  onEditTask: (task: Task) => void;
   showQuickAdd?: boolean;
   onQuickAddClose?: () => void;
 }
 
-const TaskList = ({ onCreateTask, onEditTask, showQuickAdd: externalShowQuickAdd, onQuickAddClose }: TaskListProps) => {
-  const isMobile = useMobile();
+const TaskList = ({ onCreateTask, showQuickAdd, onQuickAddClose }: TaskListProps) => {
   const {
     tasks,
     stats,
@@ -52,12 +46,8 @@ const TaskList = ({ onCreateTask, onEditTask, showQuickAdd: externalShowQuickAdd
 
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [isAddingTask, setIsAddingTask] = useState(false);
-  const [internalShowQuickAdd, setInternalShowQuickAdd] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [editingTaskData, setEditingTaskData] = useState<Task | null>(null);
-
-  // Usar el estado externo si está disponible, sino usar el interno
-  const showQuickAdd = externalShowQuickAdd !== undefined ? externalShowQuickAdd : internalShowQuickAdd;
 
   const getFilterTitle = () => {
     switch (filter) {
@@ -110,12 +100,7 @@ const TaskList = ({ onCreateTask, onEditTask, showQuickAdd: externalShowQuickAdd
   };
 
   const handleAddTask = () => {
-    console.log('[TaskList] handleAddTask called');
-    console.log('[TaskList] newTaskTitle:', newTaskTitle);
-    
     if (newTaskTitle.trim()) {
-      console.log('[TaskList] Calling addTask with:', { title: newTaskTitle.trim() });
-      
       addTask({
         title: newTaskTitle.trim(),
         completed: false,
@@ -123,12 +108,9 @@ const TaskList = ({ onCreateTask, onEditTask, showQuickAdd: externalShowQuickAdd
         category: 'personal',
         starred: false
       });
-      
+
       setNewTaskTitle('');
       setIsAddingTask(false);
-      console.log('[TaskList] Task added successfully');
-    } else {
-      console.warn('[TaskList] Title is empty, not adding task');
     }
   };
 
@@ -141,34 +123,8 @@ const TaskList = ({ onCreateTask, onEditTask, showQuickAdd: externalShowQuickAdd
     }
   };
 
-  const handleQuickAddClick = () => {
-    if (isMobile) {
-      setIsAddingTask(true);
-    } else {
-      if (externalShowQuickAdd !== undefined && onQuickAddClose) {
-        // No hacer nada, el estado se maneja externamente
-      } else {
-        setInternalShowQuickAdd(true);
-      }
-    }
-  };
-
   const handleQuickAddClose = () => {
-    if (onQuickAddClose) {
-      onQuickAddClose();
-    } else {
-      setInternalShowQuickAdd(false);
-    }
-  };
-
-  const handleTaskClick = (task: Task) => {
-    if (selectedTaskId === task.id) {
-      setSelectedTaskId(null);
-      setEditingTaskData(null);
-    } else {
-      setSelectedTaskId(task.id);
-      setEditingTaskData({ ...task });
-    }
+    onQuickAddClose?.();
   };
 
   const handleEditChange = (field: keyof Task, value: any) => {
@@ -235,7 +191,7 @@ const TaskList = ({ onCreateTask, onEditTask, showQuickAdd: externalShowQuickAdd
         <div className="max-w-3xl mx-auto py-6">
           {/* Quick add for desktop */}
           <QuickTaskAdd 
-            isOpen={showQuickAdd}
+            isOpen={!!showQuickAdd}
             onClose={handleQuickAddClose}
             onComplete={handleQuickAddClose}
           />
@@ -299,13 +255,10 @@ const TaskList = ({ onCreateTask, onEditTask, showQuickAdd: externalShowQuickAdd
                 <div className="divide-y divide-gray-100">
                   {tasks.map((task) => (
                     <DropdownMenu key={task.id} open={selectedTaskId === task.id} onOpenChange={(open) => {
-                      console.log('[TaskList] DropdownMenu onOpenChange:', open, 'taskId:', task.id);
                       if (open) {
-                        console.log('[TaskList] Opening dropdown, setting editingTaskData');
                         setSelectedTaskId(task.id);
                         setEditingTaskData({ ...task });
                       } else {
-                        console.log('[TaskList] Closing dropdown, clearing selectedTaskId');
                         setSelectedTaskId(null);
                         setEditingTaskData(null);
                       }
