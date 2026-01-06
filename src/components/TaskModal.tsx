@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Plus, X, Calendar, Star, Clock, Tag } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Plus, X, Calendar, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,7 +11,6 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Task, TaskFormData } from '@/types/task';
 
-// Interfaz para las props del modal de tarea.
 interface TaskModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -20,7 +19,6 @@ interface TaskModalProps {
 }
 
 const TaskModal = ({ isOpen, onClose, onSave, editingTask }: TaskModalProps) => {
-  // Estado para el formulario de la tarea.
   const [formData, setFormData] = useState<TaskFormData>({
     title: '',
     description: '',
@@ -33,6 +31,15 @@ const TaskModal = ({ isOpen, onClose, onSave, editingTask }: TaskModalProps) => 
 
   const [newSubtask, setNewSubtask] = useState('');
   const [errors, setErrors] = useState<Partial<TaskFormData>>({});
+  const [showReminder, setShowReminder] = useState(false);
+  const [reminderTime, setReminderTime] = useState('');
+  const titleInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      setTimeout(() => titleInputRef.current?.focus(), 100);
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (editingTask) {
@@ -55,7 +62,10 @@ const TaskModal = ({ isOpen, onClose, onSave, editingTask }: TaskModalProps) => 
         starred: false,
         subtasks: []
       });
+      setShowReminder(false);
+      setReminderTime('');
     }
+    setErrors({});
   }, [editingTask, isOpen]);
 
   const validateForm = (): boolean => {
@@ -84,7 +94,7 @@ const TaskModal = ({ isOpen, onClose, onSave, editingTask }: TaskModalProps) => 
       title: formData.title,
       description: formData.description,
       completed: false,
-      dueDate: formData.dueDate,
+      dueDate: formData.dueDate === null ? undefined : formData.dueDate,
       priority: formData.priority,
       category: formData.category,
       starred: formData.starred,
@@ -102,6 +112,8 @@ const TaskModal = ({ isOpen, onClose, onSave, editingTask }: TaskModalProps) => 
       subtasks: []
     });
     setErrors({});
+    setShowReminder(false);
+    setReminderTime('');
   };
 
   const handleClose = () => {
@@ -153,9 +165,15 @@ const TaskModal = ({ isOpen, onClose, onSave, editingTask }: TaskModalProps) => 
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      handleClose();
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[600px] rounded-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[600px] rounded-2xl max-h-[90vh] overflow-y-auto" onKeyDown={handleKeyDown}>
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold text-gray-900 flex items-center">
             {editingTask ? 'Editar Tarea' : 'Crear Nueva Tarea'}
@@ -164,11 +182,11 @@ const TaskModal = ({ isOpen, onClose, onSave, editingTask }: TaskModalProps) => 
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Título */}
           <div className="space-y-2">
             <Label htmlFor="title">Título de la tarea *</Label>
             <Input
               id="title"
+              ref={titleInputRef}
               value={formData.title}
               onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
               placeholder="Ej: Completar informe mensual"
@@ -177,7 +195,6 @@ const TaskModal = ({ isOpen, onClose, onSave, editingTask }: TaskModalProps) => 
             {errors.title && <p className="text-sm text-red-500">{errors.title}</p>}
           </div>
 
-          {/* Descripción */}
           <div className="space-y-2">
             <Label htmlFor="description">Descripción</Label>
             <Textarea
@@ -190,8 +207,7 @@ const TaskModal = ({ isOpen, onClose, onSave, editingTask }: TaskModalProps) => 
             />
           </div>
 
-          {/* Fecha límite, Prioridad y Categoría */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="dueDate">Fecha límite</Label>
               <Input
@@ -206,6 +222,28 @@ const TaskModal = ({ isOpen, onClose, onSave, editingTask }: TaskModalProps) => 
               />
             </div>
 
+            {formData.dueDate && (
+              <div className="space-y-2">
+                <Label htmlFor="dueTime">Hora</Label>
+                <Input
+                  id="dueTime"
+                  type="time"
+                  className="rounded-xl"
+                  onChange={(e) => {
+                    const time = e.target.value;
+                    if (formData.dueDate && time) {
+                      const [hours, minutes] = time.split(':');
+                      const newDate = new Date(formData.dueDate);
+                      newDate.setHours(parseInt(hours), parseInt(minutes));
+                      setFormData(prev => ({ ...prev, dueDate: newDate }));
+                    }
+                  }}
+                />
+              </div>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="priority">Prioridad</Label>
               <Select value={formData.priority} onValueChange={(value: any) => setFormData(prev => ({ ...prev, priority: value }))}>
@@ -236,7 +274,6 @@ const TaskModal = ({ isOpen, onClose, onSave, editingTask }: TaskModalProps) => 
             </div>
           </div>
 
-          {/* Tarea destacada */}
           <div className="flex items-center justify-between">
             <div className="space-y-1">
               <Label htmlFor="starred">Marcar como destacada</Label>
@@ -249,11 +286,37 @@ const TaskModal = ({ isOpen, onClose, onSave, editingTask }: TaskModalProps) => 
             />
           </div>
 
-          {/* Subtareas */}
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <Label>Recordatorio</Label>
+              <p className="text-sm text-gray-500">Recibir notificación antes de la fecha límite</p>
+            </div>
+            <Switch
+              checked={showReminder}
+              onCheckedChange={(checked) => setShowReminder(checked)}
+            />
+          </div>
+
+          {showReminder && (
+            <div className="space-y-2">
+              <Label htmlFor="reminderTime">Tiempo antes del recordatorio</Label>
+              <Select value={reminderTime} onValueChange={setReminderTime}>
+                <SelectTrigger className="rounded-xl">
+                  <SelectValue placeholder="Seleccionar tiempo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="15">15 minutos antes</SelectItem>
+                  <SelectItem value="30">30 minutos antes</SelectItem>
+                  <SelectItem value="60">1 hora antes</SelectItem>
+                  <SelectItem value="1440">1 día antes</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           <div className="space-y-3">
             <Label>Subtareas</Label>
             
-            {/* Lista de subtareas */}
             {formData.subtasks.length > 0 && (
               <div className="space-y-2">
                 {formData.subtasks.map((subtask, index) => (
@@ -279,7 +342,6 @@ const TaskModal = ({ isOpen, onClose, onSave, editingTask }: TaskModalProps) => 
               </div>
             )}
 
-            {/* Agregar subtarea */}
             <div className="flex items-center space-x-2">
               <Input
                 value={newSubtask}
@@ -299,7 +361,6 @@ const TaskModal = ({ isOpen, onClose, onSave, editingTask }: TaskModalProps) => 
             </div>
           </div>
 
-          {/* Vista previa de etiquetas */}
           <div className="flex items-center space-x-2">
             <span className="text-sm text-gray-600">Etiquetas:</span>
             <Badge variant="secondary" className={getPriorityColor(formData.priority)}>
@@ -318,7 +379,6 @@ const TaskModal = ({ isOpen, onClose, onSave, editingTask }: TaskModalProps) => 
             )}
           </div>
 
-          {/* Botones */}
           <div className="flex space-x-3 pt-4">
             <Button
               type="button"
@@ -341,4 +401,4 @@ const TaskModal = ({ isOpen, onClose, onSave, editingTask }: TaskModalProps) => 
   );
 };
 
-export default TaskModal; 
+export default TaskModal;

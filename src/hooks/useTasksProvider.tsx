@@ -1,14 +1,39 @@
-import { useState, useMemo } from 'react';
+import { createContext, useContext, useState, useMemo, useCallback, ReactNode } from 'react';
 import { Task, TaskFilter, TaskSort } from '@/types/task';
 
-export const useTasks = () => {
+interface TasksContextType {
+  tasks: Task[];
+  allTasks: Task[];
+  filter: TaskFilter;
+  sort: TaskSort;
+  stats: {
+    total: number;
+    completed: number;
+    pending: number;
+    starred: number;
+    overdue: number;
+  };
+  setFilter: (filter: TaskFilter) => void;
+  setSort: (sort: TaskSort) => void;
+  addTask: (taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  updateTask: (id: string, updates: Partial<Task>) => void;
+  deleteTask: (id: string) => void;
+  toggleTaskCompletion: (id: string) => void;
+  toggleTaskStarred: (id: string) => void;
+  addSubtask: (taskId: string, subtaskTitle: string) => void;
+  toggleSubtask: (taskId: string, subtaskId: string) => void;
+}
+
+const TasksContext = createContext<TasksContextType | undefined>(undefined);
+
+export const TasksProvider = ({ children }: { children: ReactNode }) => {
   const [tasks, setTasks] = useState<Task[]>([
     {
       id: '1',
       title: 'Revisar propuesta de diseño',
       description: 'Revisar los mockups y dar feedback',
       completed: false,
-      dueDate: new Date(Date.now() + 86400000), // mañana
+      dueDate: new Date(Date.now() + 86400000),
       priority: 'high',
       category: 'work',
       createdAt: new Date(),
@@ -47,51 +72,68 @@ export const useTasks = () => {
   const [filter, setFilter] = useState<TaskFilter>('all');
   const [sort, setSort] = useState<TaskSort>('dueDate');
 
-  // Crear nueva tarea
-  const addTask = (taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const addTask = useCallback((taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>) => {
+    console.log('[TasksProvider] addTask called with:', JSON.stringify(taskData, null, 2));
+    
     const newTask: Task = {
       ...taskData,
       id: Date.now().toString(),
       createdAt: new Date(),
       updatedAt: new Date()
     };
-    setTasks(prev => [...prev, newTask]);
-  };
+    
+    console.log('[TasksProvider] Created new task:', JSON.stringify(newTask, null, 2));
+    
+    setTasks(prev => {
+      const updated = [...prev, newTask];
+      console.log('[TasksProvider] Tasks after add:', updated.length, 'tasks');
+      return updated;
+    });
+  }, []);
 
-  // Actualizar tarea existente
-  const updateTask = (id: string, updates: Partial<Task>) => {
+  const updateTask = useCallback((id: string, updates: Partial<Task>) => {
+    console.log('[TasksProvider] updateTask called:', id, JSON.stringify(updates, null, 2));
+    
     setTasks(prev => prev.map(task => 
       task.id === id 
         ? { ...task, ...updates, updatedAt: new Date() }
         : task
     ));
-  };
+  }, []);
 
-  // Eliminar tarea
-  const deleteTask = (id: string) => {
-    setTasks(prev => prev.filter(task => task.id !== id));
-  };
+  const deleteTask = useCallback((id: string) => {
+    console.log('[TasksProvider] deleteTask called:', id);
+    
+    setTasks(prev => {
+      const filtered = prev.filter(task => task.id !== id);
+      console.log('[TasksProvider] Tasks after delete:', filtered.length, 'tasks');
+      return filtered;
+    });
+  }, []);
 
-  // Marcar tarea como completada/pendiente
-  const toggleTaskCompletion = (id: string) => {
+  const toggleTaskCompletion = useCallback((id: string) => {
+    console.log('[TasksProvider] toggleTaskCompletion called:', id);
+    
     setTasks(prev => prev.map(task => 
       task.id === id 
         ? { ...task, completed: !task.completed, updatedAt: new Date() }
         : task
     ));
-  };
+  }, []);
 
-  // Marcar tarea como favorita
-  const toggleTaskStarred = (id: string) => {
+  const toggleTaskStarred = useCallback((id: string) => {
+    console.log('[TasksProvider] toggleTaskStarred called:', id);
+    
     setTasks(prev => prev.map(task => 
       task.id === id 
         ? { ...task, starred: !task.starred, updatedAt: new Date() }
         : task
     ));
-  };
+  }, []);
 
-  // Agregar subtarea
-  const addSubtask = (taskId: string, subtaskTitle: string) => {
+  const addSubtask = useCallback((taskId: string, subtaskTitle: string) => {
+    console.log('[TasksProvider] addSubtask called:', taskId, subtaskTitle);
+    
     const newSubtask = {
       id: Date.now().toString(),
       title: subtaskTitle,
@@ -107,10 +149,11 @@ export const useTasks = () => {
           }
         : task
     ));
-  };
+  }, []);
 
-  // Togglear subtarea
-  const toggleSubtask = (taskId: string, subtaskId: string) => {
+  const toggleSubtask = useCallback((taskId: string, subtaskId: string) => {
+    console.log('[TasksProvider] toggleSubtask called:', taskId, subtaskId);
+    
     setTasks(prev => prev.map(task => 
       task.id === taskId 
         ? { 
@@ -124,13 +167,11 @@ export const useTasks = () => {
           }
         : task
     ));
-  };
+  }, []);
 
-  // Filtrar tareas
   const filteredTasks = useMemo(() => {
     let filtered = tasks;
 
-    // Aplicar filtros
     switch (filter) {
       case 'completed':
         filtered = filtered.filter(task => task.completed);
@@ -145,7 +186,6 @@ export const useTasks = () => {
         break;
     }
 
-    // Aplicar ordenamiento
     switch (sort) {
       case 'dueDate':
         filtered.sort((a, b) => {
@@ -170,7 +210,6 @@ export const useTasks = () => {
     return filtered;
   }, [tasks, filter, sort]);
 
-  // Estadísticas
   const stats = useMemo(() => {
     const total = tasks.length;
     const completed = tasks.filter(t => t.completed).length;
@@ -185,20 +224,33 @@ export const useTasks = () => {
     return { total, completed, pending, starred, overdue };
   }, [tasks]);
 
-  return {
-    tasks: filteredTasks,
-    allTasks: tasks,
-    filter,
-    sort,
-    stats,
-    setFilter,
-    setSort,
-    addTask,
-    updateTask,
-    deleteTask,
-    toggleTaskCompletion,
-    toggleTaskStarred,
-    addSubtask,
-    toggleSubtask
-  };
-}; 
+  return (
+    <TasksContext.Provider value={{
+      tasks: filteredTasks,
+      allTasks: tasks,
+      filter,
+      sort,
+      stats,
+      setFilter,
+      setSort,
+      addTask,
+      updateTask,
+      deleteTask,
+      toggleTaskCompletion,
+      toggleTaskStarred,
+      addSubtask,
+      toggleSubtask
+    }}>
+      {children}
+    </TasksContext.Provider>
+  );
+};
+
+export const useTasks = () => {
+  const context = useContext(TasksContext);
+  if (context === undefined) {
+    console.warn('[useTasks] useTasks used outside of TasksProvider');
+    throw new Error('useTasks must be used within a TasksProvider');
+  }
+  return context;
+};

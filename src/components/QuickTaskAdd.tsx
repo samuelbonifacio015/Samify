@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
-import { Calendar, Clock, Check, X, ChevronDown } from 'lucide-react';
+import { Calendar, Check, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { useTasks } from '@/hooks/useTasks';
+import { useTasks } from '@/hooks/useTasksProvider';
 
 interface QuickTaskAddProps {
   isOpen: boolean;
@@ -42,20 +42,34 @@ const QuickTaskAdd = ({ isOpen, onClose, onComplete }: QuickTaskAddProps) => {
   }, [isOpen]);
 
   const handleSubmit = () => {
-    if (!title.trim()) return;
+    console.log('[QuickTaskAdd] handleSubmit called');
+    console.log('[QuickTaskAdd] Title:', title);
+    console.log('[QuickTaskAdd] Description:', description);
+    console.log('[QuickTaskAdd] Selected date:', selectedDate);
+    console.log('[QuickTaskAdd] Custom date:', customDate);
+    
+    if (!title.trim()) {
+      console.warn('[QuickTaskAdd] Title is empty, aborting');
+      return;
+    }
 
     let dueDate: Date | undefined;
     
     if (selectedDate === 'today') {
       dueDate = new Date();
+      console.log('[QuickTaskAdd] Due date set to today');
     } else if (selectedDate === 'tomorrow') {
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
       dueDate = tomorrow;
+      console.log('[QuickTaskAdd] Due date set to tomorrow');
     } else if (selectedDate === 'custom' && customDate) {
       dueDate = new Date(customDate);
+      console.log('[QuickTaskAdd] Due date set to custom:', customDate);
     }
 
+    console.log('[QuickTaskAdd] Calling addTask with:', { title: title.trim(), description: description.trim(), dueDate });
+    
     addTask({
       title: title.trim(),
       description: description.trim(),
@@ -66,7 +80,6 @@ const QuickTaskAdd = ({ isOpen, onClose, onComplete }: QuickTaskAddProps) => {
       starred: false
     });
 
-    // Reset form
     setTitle('');
     setDescription('');
     setSelectedDate('today');
@@ -78,6 +91,7 @@ const QuickTaskAdd = ({ isOpen, onClose, onComplete }: QuickTaskAddProps) => {
   };
 
   const handleCancel = () => {
+    console.log('[QuickTaskAdd] handleCancel called');
     setTitle('');
     setDescription('');
     setSelectedDate('today');
@@ -98,12 +112,11 @@ const QuickTaskAdd = ({ isOpen, onClose, onComplete }: QuickTaskAddProps) => {
   if (!isOpen) return null;
 
   return (
-    <div className="p-6">
+    <div className="w-full px-6 py-4">
       <div 
         ref={containerRef}
         className="bg-white border border-gray-200 rounded-2xl shadow-lg p-6 max-w-2xl mx-auto animate-fade-in"
       >
-        {/* Title Input */}
         <div className="mb-4">
           <Input
             ref={inputRef}
@@ -115,7 +128,17 @@ const QuickTaskAdd = ({ isOpen, onClose, onComplete }: QuickTaskAddProps) => {
           />
         </div>
 
-        {/* Details Toggle */}
+        {showDetails && (
+          <div className="mb-4 pb-4 border-b border-gray-100">
+            <Textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Agregar descripción..."
+              className="border-0 resize-none text-sm placeholder:text-gray-400 focus:ring-0 focus:border-0 p-0 bg-transparent min-h-[60px]"
+            />
+          </div>
+        )}
+
         <div className="mb-4">
           <Button
             variant="ghost"
@@ -128,21 +151,8 @@ const QuickTaskAdd = ({ isOpen, onClose, onComplete }: QuickTaskAddProps) => {
           </Button>
         </div>
 
-        {/* Details Section */}
-        {showDetails && (
-          <div className="mb-4 pb-4 border-b border-gray-100">
-            <Textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Agregar descripción..."
-              className="border-0 resize-none text-sm placeholder:text-gray-400 focus:ring-0 focus:border-0 p-0 bg-transparent min-h-[60px]"
-            />
-          </div>
-        )}
-
-        {/* Date Selection */}
         <div className="mb-6">
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-3 flex-wrap gap-y-2">
             <Button
               variant={selectedDate === 'today' ? 'default' : 'outline'}
               size="sm"
@@ -182,8 +192,7 @@ const QuickTaskAdd = ({ isOpen, onClose, onComplete }: QuickTaskAddProps) => {
           )}
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-y-3">
           <div className="flex items-center space-x-3">
             <Button
               onClick={handleSubmit}
@@ -211,4 +220,4 @@ const QuickTaskAdd = ({ isOpen, onClose, onComplete }: QuickTaskAddProps) => {
   );
 };
 
-export default QuickTaskAdd; 
+export default QuickTaskAdd;

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useTasks } from '@/hooks/useTasks';
+import { useTasks } from '@/hooks/useTasksProvider';
 import { useMobile } from '@/hooks/use-mobile';
 import { Task } from '@/types/task';
 import TaskList from '@/components/TaskList';

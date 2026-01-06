@@ -19,7 +19,7 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { useTasks } from '@/hooks/useTasks';
+import { useTasks } from '@/hooks/useTasksProvider';
 import { useMobile } from '@/hooks/use-mobile';
 import { Task } from '@/types/task';
 import QuickTaskAdd from './QuickTaskAdd';
@@ -110,7 +110,12 @@ const TaskList = ({ onCreateTask, onEditTask, showQuickAdd: externalShowQuickAdd
   };
 
   const handleAddTask = () => {
+    console.log('[TaskList] handleAddTask called');
+    console.log('[TaskList] newTaskTitle:', newTaskTitle);
+    
     if (newTaskTitle.trim()) {
+      console.log('[TaskList] Calling addTask with:', { title: newTaskTitle.trim() });
+      
       addTask({
         title: newTaskTitle.trim(),
         completed: false,
@@ -118,8 +123,12 @@ const TaskList = ({ onCreateTask, onEditTask, showQuickAdd: externalShowQuickAdd
         category: 'personal',
         starred: false
       });
+      
       setNewTaskTitle('');
       setIsAddingTask(false);
+      console.log('[TaskList] Task added successfully');
+    } else {
+      console.warn('[TaskList] Title is empty, not adding task');
     }
   };
 
