@@ -299,10 +299,15 @@ const TaskList = ({ onCreateTask, onEditTask, showQuickAdd: externalShowQuickAdd
                 <div className="divide-y divide-gray-100">
                   {tasks.map((task) => (
                     <DropdownMenu key={task.id} open={selectedTaskId === task.id} onOpenChange={(open) => {
+                      console.log('[TaskList] DropdownMenu onOpenChange:', open, 'taskId:', task.id);
                       if (open) {
+                        console.log('[TaskList] Opening dropdown, setting editingTaskData');
                         setSelectedTaskId(task.id);
+                        setEditingTaskData({ ...task });
                       } else {
+                        console.log('[TaskList] Closing dropdown, clearing selectedTaskId');
                         setSelectedTaskId(null);
+                        setEditingTaskData(null);
                       }
                     }}>
                       <DropdownMenuTrigger asChild>
@@ -310,7 +315,6 @@ const TaskList = ({ onCreateTask, onEditTask, showQuickAdd: externalShowQuickAdd
                           className={`p-6 hover:bg-gray-50 transition-colors cursor-pointer ${
                             task.completed ? 'opacity-60' : ''
                           } ${selectedTaskId === task.id ? 'bg-gray-50' : ''}`}
-                          onClick={() => handleTaskClick(task)}
                         >
                           <div className="flex items-start space-x-4">
                             <Checkbox
