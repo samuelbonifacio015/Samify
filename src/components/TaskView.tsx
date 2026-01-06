@@ -4,8 +4,6 @@ import { useMobile } from '@/hooks/use-mobile';
 import { Task } from '@/types/task';
 import TaskList from './TaskList';
 import TaskModal from './TaskModal';
-import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
-import Sidebar from './Sidebar';
 
 const TaskView = () => {
   const isMobile = useMobile();
@@ -40,19 +38,13 @@ const TaskView = () => {
   };
 
   return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-gray-50">
-        <Sidebar onCreateTask={handleCreateTask} inTasks={true} />
-        
-        <SidebarInset className="flex-1">
-          <TaskList 
-            onCreateTask={handleCreateTask}
-            onEditTask={handleEditTask}
-            showQuickAdd={showQuickAdd}
-            onQuickAddClose={() => setShowQuickAdd(false)}
-          />
-        </SidebarInset>
-      </div>
+    <>
+      <TaskList 
+        onCreateTask={handleCreateTask}
+        onEditTask={handleEditTask}
+        showQuickAdd={showQuickAdd}
+        onQuickAddClose={() => setShowQuickAdd(false)}
+      />
       
       <TaskModal
         isOpen={isTaskModalOpen}
@@ -63,8 +55,8 @@ const TaskView = () => {
         onSave={handleSaveTask}
         editingTask={editingTask}
       />
-    </SidebarProvider>
+    </>
   );
 };
 
-export default TaskView; 
+export default TaskView;

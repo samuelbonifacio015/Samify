@@ -2,10 +2,8 @@ import { useState } from 'react';
 import { useTasks } from '@/hooks/useTasks';
 import { useMobile } from '@/hooks/use-mobile';
 import { Task } from '@/types/task';
-import Sidebar from '@/components/Sidebar';
 import TaskList from '@/components/TaskList';
 import TaskModal from '@/components/TaskModal';
-import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 
 const Tasks = () => {
   const isMobile = useMobile();
@@ -17,11 +15,9 @@ const Tasks = () => {
 
   const handleCreateTask = () => {
     if (isMobile) {
-      // En móvil usar modal completo
       setEditingTask(undefined);
       setIsTaskModalOpen(true);
     } else {
-      // En desktop usar QuickAdd
       setShowQuickAdd(true);
     }
   };
@@ -42,22 +38,13 @@ const Tasks = () => {
   };
 
   return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-white lg:max-w-7xl mx-auto">
-        <Sidebar 
-          inTasks={true}
-          onCreateTask={handleCreateTask}
-        />
-        
-        <SidebarInset className="flex-1">
-          <TaskList 
-            onCreateTask={handleCreateTask}
-            onEditTask={handleEditTask}
-            showQuickAdd={showQuickAdd}
-            onQuickAddClose={() => setShowQuickAdd(false)}
-          />
-        </SidebarInset>
-      </div>
+    <>
+      <TaskList 
+        onCreateTask={handleCreateTask}
+        onEditTask={handleEditTask}
+        showQuickAdd={showQuickAdd}
+        onQuickAddClose={() => setShowQuickAdd(false)}
+      />
       
       <TaskModal
         isOpen={isTaskModalOpen}
@@ -68,8 +55,8 @@ const Tasks = () => {
         onSave={handleSaveTask}
         editingTask={editingTask}
       />
-    </SidebarProvider>
+    </>
   );
 };
 
-export default Tasks; 
+export default Tasks;

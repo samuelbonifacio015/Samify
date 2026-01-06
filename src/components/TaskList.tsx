@@ -183,25 +183,16 @@ const TaskList = ({ onCreateTask, onEditTask, showQuickAdd: externalShowQuickAdd
 
   if (tasks.length === 0 && !isAddingTask && !showQuickAdd) {
     return (
-      <div className="h-full flex flex-col">
-        {/* Header simplificado sin botón crear */}
-        <div className="p-6 border-b border-gray-100">
-          <div className="max-w-4xl mx-auto">
-            <h1 className="text-2xl font-semibold text-gray-900 text-center">{getFilterTitle()}</h1>
-          </div>
-        </div>
-
-        {/* Empty state centrado */}
+      <div className="h-screen flex flex-col bg-white">
+        {/* Empty state centrado verticalmente */}
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center max-w-md mx-auto px-6">
-            <div className="w-24 h-24 bg-white rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center lg:m-auto">
-                <Check className="h-6 w-6 text-gray-400" />
-              </div>
+            <div className="w-24 h-24 bg-gray-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
+              <Check className="h-12 w-12 text-gray-400" />
             </div>
-            <h2 className="text-xl font-medium text-gray-900 mb-2">No hay tareas aún</h2>
-            <p className="text-gray-600 mb-6">
-              Agrega tareas pendientes y lleva un seguimiento de ellas en Google Workspace.
+            <h2 className="text-2xl font-semibold text-gray-900 mb-2">No hay tareas aún</h2>
+            <p className="text-gray-600 mb-8">
+              Agrega tareas pendientes y lleva un seguimiento de ellas.
             </p>
             <Button
               onClick={onCreateTask}
@@ -217,13 +208,13 @@ const TaskList = ({ onCreateTask, onEditTask, showQuickAdd: externalShowQuickAdd
   }
 
   return (
-    <div className="h-full flex flex-col bg-white">
-      {/* Header simplificado */}
-      <div className="bg-white border-b border-gray-100 p-6">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-2xl font-semibold text-gray-900 text-center">{getFilterTitle()}</h1>
+    <div className="h-screen flex flex-col bg-white">
+      {/* Header centrado */}
+      <div className="bg-white border-b border-gray-100 py-8 px-6">
+        <div className="max-w-3xl mx-auto">
+          <h1 className="text-3xl font-semibold text-gray-900 text-center">{getFilterTitle()}</h1>
           {stats.total > 0 && (
-            <p className="text-sm text-gray-600 mt-1 text-center">
+            <p className="text-sm text-gray-600 mt-2 text-center">
               {stats.pending} pendientes, {stats.completed} completadas
             </p>
           )}
@@ -232,7 +223,7 @@ const TaskList = ({ onCreateTask, onEditTask, showQuickAdd: externalShowQuickAdd
 
       {/* Contenido centrado */}
       <div className="flex-1 overflow-auto">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-3xl mx-auto py-6">
           {/* Quick add for desktop */}
           <QuickTaskAdd 
             isOpen={showQuickAdd}
@@ -242,35 +233,37 @@ const TaskList = ({ onCreateTask, onEditTask, showQuickAdd: externalShowQuickAdd
 
           {/* Add new task quickly - mobile version */}
           {isAddingTask && (
-            <div className="p-6 border-b border-gray-100 bg-white mx-6 mt-6 rounded-2xl shadow-sm">
-              <div className="flex items-center space-x-3">
-                <Checkbox disabled className="opacity-50" />
-                <Input
-                  value={newTaskTitle}
-                  onChange={(e) => setNewTaskTitle(e.target.value)}
-                  onKeyDown={handleKeyPress}
-                  placeholder="Escribe una nueva tarea..."
-                  className="flex-1 border-0 bg-transparent focus:ring-0 focus:border-0 p-0 text-gray-900"
-                  autoFocus
-                />
-                <div className="flex items-center space-x-2">
-                  <Button
-                    onClick={handleAddTask}
-                    size="sm"
-                    className="bg-primary hover:bg-primary/90 text-white"
-                  >
-                    <Check className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      setIsAddingTask(false);
-                      setNewTaskTitle('');
-                    }}
-                    size="sm"
-                    variant="outline"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
+            <div className="px-6 mb-4">
+              <div className="p-4 border border-gray-200 bg-white rounded-2xl shadow-sm">
+                <div className="flex items-center space-x-3">
+                  <Checkbox disabled className="opacity-50" />
+                  <Input
+                    value={newTaskTitle}
+                    onChange={(e) => setNewTaskTitle(e.target.value)}
+                    onKeyDown={handleKeyPress}
+                    placeholder="Escribe una nueva tarea..."
+                    className="flex-1 border-0 bg-transparent focus:ring-0 focus:border-0 p-0 text-gray-900"
+                    autoFocus
+                  />
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      onClick={handleAddTask}
+                      size="sm"
+                      className="bg-primary hover:bg-primary/90 text-white"
+                    >
+                      <Check className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        setIsAddingTask(false);
+                        setNewTaskTitle('');
+                      }}
+                      size="sm"
+                      variant="outline"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -278,24 +271,22 @@ const TaskList = ({ onCreateTask, onEditTask, showQuickAdd: externalShowQuickAdd
 
           {/* Add task button */}
           {!isAddingTask && !showQuickAdd && (
-            <div className="p-6">
-              <div className="max-w-md mx-auto">
-                <Button
-                  onClick={onCreateTask}
-                  variant="ghost"
-                  className="w-full justify-center text-primary hover:bg-primary/10 rounded-2xl h-12 border-2 border-dashed border-primary/30 hover:border-primary/50 transition-colors"
-                >
-                  <Plus className="h-4 w-4 mr-2 flex-shrink-0" />
-                  <span className="whitespace-nowrap">Agregar una tarea</span>
-                </Button>
-              </div>
+            <div className="px-6 mb-4">
+              <Button
+                onClick={onCreateTask}
+                variant="ghost"
+                className="w-full justify-center text-primary hover:bg-primary/10 rounded-2xl h-12 border-2 border-dashed border-primary/30 hover:border-primary/50 transition-colors"
+              >
+                <Plus className="h-4 w-4 mr-2 flex-shrink-0" />
+                <span className="whitespace-nowrap">Agregar una tarea</span>
+              </Button>
             </div>
           )}
 
           {/* Task list */}
           {tasks.length > 0 && (
             <div className="px-6 pb-6">
-              <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+              <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
                 <div className="divide-y divide-gray-100">
                   {tasks.map((task) => (
                     <DropdownMenu key={task.id} open={selectedTaskId === task.id} onOpenChange={(open) => {

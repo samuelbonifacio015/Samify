@@ -224,9 +224,10 @@ const Sidebar = ({ inTasks, onCreateEvent, onCreateTask }: SidebarProps) => {
                     <SidebarMenuItem key={list.id}>
                       <SidebarMenuButton 
                         onClick={() => setFilter(list.id as any)}
-                        className={`w-full justify-between hover:bg-gray-50 rounded-lg transition-colors py-2 px-3 ${
+                        className={`w-full ${state === 'expanded' ? 'justify-between' : 'justify-center'} hover:bg-gray-50 rounded-lg transition-colors py-2 px-3 ${
                           isActive ? 'bg-primary/10 text-primary border border-primary/20' : 'text-gray-700'
                         }`}
+                        tooltip={state === 'collapsed' ? list.name : undefined}
                       >
                         <div className="flex items-center space-x-3">
                           <Icon className="h-4 w-4" style={{ color: isActive ? '#3B82F6' : list.color }} />
